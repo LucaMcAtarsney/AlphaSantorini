@@ -3,6 +3,7 @@ from engine.enums import Player, GamePhase
 from engine.game_types import PlacementAction, TurnAction
 from engine.agents.random_agent import RandomAgent
 from engine.agents.greedy_agent import GreedyAgent
+from engine.agents.heuristic_agent import HeuristicAgent
 from engine.agents.base import Agent
 
 
@@ -74,7 +75,8 @@ def simulate_n_matches():
 
     agent_map = {
         "1":("Random Agent", RandomAgent),
-        "2":("Greedy Agent", GreedyAgent)
+        "2":("Greedy Agent", GreedyAgent),
+        "3":("Heuristic Evaluation Agent", HeuristicAgent)
     }
 
     print("\n----------- AGENT SELECTION -----------")

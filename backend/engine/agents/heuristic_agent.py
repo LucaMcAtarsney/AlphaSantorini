@@ -70,8 +70,8 @@ class HeuristicAgent(Agent):
         
         state.to_move = original_to_move
 
-        w_height = 2.0
-        w_mobility = 2.0
+        w_height = 3.0
+        w_mobility = 0.5
         
         final_score = (w_height * height_score) + (w_mobility * my_mobility) - (w_mobility * opponent_mobility)
         
