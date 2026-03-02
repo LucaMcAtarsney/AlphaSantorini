@@ -4,7 +4,7 @@ class Player(Enum):
 
     ONE = auto()
     TWO = auto()
-    
+
     def opponent(self):
         if self == Player.ONE:
             return Player.TWO
@@ -12,7 +12,7 @@ class Player(Enum):
             return Player.ONE
         
 class GamePhase(Enum):
-
+    
     PLACEMENT = auto()
     MAIN = auto()
     GAME_OVER = auto()
