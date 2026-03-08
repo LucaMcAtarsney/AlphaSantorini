@@ -16,6 +16,10 @@ class MinimaxAgent(Agent):
     def __init__(self, player: Player, depth: int = 3):
         self.player = player
         self.depth = depth
+        self._transposition_table = {}
+
+    def _clear_cache(self):
+        self._transposition_table = {}
 
     def _evaluate_board(self, state: GameState) -> float:
 
@@ -47,6 +51,16 @@ class MinimaxAgent(Agent):
         return score
     
     def _minimax(self, state: GameState, depth: int, alpha: float, beta: float, maximising_player: bool) -> float:
+
+        state_key = (
+            tuple(map(tuple, state.board.heights)),
+            tuple(sorted(state.workers.get(self.player, []))),
+            tuple(sorted(state.workers.get(self.player.opponent(), []))),
+            state.to_move
+        )
+        if state_key in self._transposition_table and self._transposition_table[state_key][0] >= depth:
+            return self._transposition_table[state_key][1]
+
         if depth == 0 or state.is_over():
             return self._evaluate_board(state)
         
@@ -63,6 +77,7 @@ class MinimaxAgent(Agent):
                 alpha = max(alpha, eval)
                 if beta <= alpha:
                     break
+            self._transposition_table[state_key] = (depth, max_eval)
             return max_eval
         else:
             min_eval = float('inf')
@@ -73,6 +88,7 @@ class MinimaxAgent(Agent):
                 beta = min(beta, eval)
                 if beta <= alpha:
                     break
+            self._transposition_table[state_key] = (depth, min_eval)
             return min_eval
     
     def select_action(
