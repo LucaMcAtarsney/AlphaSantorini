@@ -4,6 +4,7 @@ from typing import Tuple
 from .enums import Player
 
 Coord = Tuple[int, int]
+TOTAL_ACTIONS = 306
 
 @dataclass(frozen=True)
 class PlacementAction:

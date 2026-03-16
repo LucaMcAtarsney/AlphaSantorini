@@ -5,6 +5,7 @@ from engine.agents.random_agent import RandomAgent
 from engine.agents.greedy_agent import GreedyAgent
 from engine.agents.heuristic_agent import HeuristicAgent
 from engine.agents.minimax_agent import MinimaxAgent
+from engine.agents.mcts_agent import MCTSAgent
 from engine.agents.base import Agent
 
 
@@ -78,7 +79,8 @@ def simulate_n_matches():
         "1":("Random Agent", RandomAgent),
         "2":("Greedy Agent", GreedyAgent),
         "3":("Heuristic Evaluation Agent", HeuristicAgent),
-        "4":("Minimax Agent", MinimaxAgent)
+        "4":("Minimax Agent", MinimaxAgent),
+        "5":("MCTS Agent", MCTSAgent),
     }
 
     print("\n----------- AGENT SELECTION -----------")
@@ -96,7 +98,8 @@ def simulate_n_matches():
     p2_agent_class = agent_map[p2_choice][1]
 
     def create_agent(agent_class, player):
-        # Suspect some agents will require additional arguments in future
+        if agent_class == MCTSAgent:
+            return MCTSAgent(player=player, num_simulations=100)
         return agent_class(player=player)
 
     agents = {
