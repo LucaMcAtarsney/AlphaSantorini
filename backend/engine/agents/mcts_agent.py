@@ -4,18 +4,19 @@ from ..mcts import MCTS, ActionCodec
 import numpy as np
 
 class MCTSAgent(Agent):
-    def __init__(self, num_simulations: int = 200, c_puct: float = 1.5):
+    def __init__(self, player, num_simulations: int = 200, c_puct: float = 1.5):
+        self.player = player
         self.num_simulations = num_simulations
         self.mcts = MCTS(c_puct=c_puct)
 
-    def get_action(self, game: GameState):
-        if not game.legal_actions():
+    def select_action(self, game: GameState, legal_actions):
+        if not legal_actions:
             return None
 
         visit_counts = self.mcts.run(game, num_simulations=self.num_simulations)
 
         if not visit_counts:
-            return np.random.choice(game.legal_actions())
+            return np.random.choice(legal_actions)
 
         action_indices = list(visit_counts.keys())
         counts = np.array([visit_counts[i] for i in action_indices])
