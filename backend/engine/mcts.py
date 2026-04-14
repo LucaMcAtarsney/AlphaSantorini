@@ -21,12 +21,10 @@ def dir_index(dr: int, dc: int) -> int:
 
 
 class ActionCodec:
-    """Encode/decode actions into a fixed index space.
-
-    Indices:
-    - [0..49]: placement -> worker_index*25 + r*5 + c
-    - [50..305]: turn    -> 50 + (w*128) + (move_dir*16) + (build_dir*2) + dome_flag
-    """
+    # Encode/decode actions into a fixed index space.
+    #Indices:
+    #- [0..49]: placement -> worker_index*25 + r*5 + c
+    #- [50..305]: turn    -> 50 + (w*128) + (move_dir*16) + (build_dir*2) + dome_flag
 
     @staticmethod
     def encode_index(state: GameState, action) -> int:
@@ -107,6 +105,7 @@ class MCTSNode:
     terminal_value: Optional[float] = None
 
 
+# This will be the NN MCTS
 class MCTS:
     def __init__(self, c_puct: float = 1.5, value_fn: Optional[Callable[[GameState, Player], float]] = None):
         self.c_puct = c_puct
@@ -219,6 +218,107 @@ class MCTS:
             return state.apply_placement(action)
         else:
             return state.apply_turn(action)
+
+class DefaultMCTS:
+    #MCTS with random rollouts
+
+    def __init__(self, c_puct: float = 1.4):
+        self.c_puct = c_puct
+
+    def run(self, root_state: GameState, num_simulations: int = 200) -> Dict[int, int]:
+        import random as _rand
+        root = MCTSNode(state=root_state.clone(), player_to_move=root_state.to_move)
+        self._expand(root)
+
+        for _ in range(num_simulations):
+            node = root
+            path: List[Tuple[MCTSNode, int]] = []
+
+            # Selection
+            while node.is_expanded and node.terminal_value is None and node.children:
+                total_N = sum(child.visits for child in node.children.values())
+                best_score = -1e9
+                best_action_idx = None
+                for a_idx, child in node.children.items():
+                    u = self.c_puct * child.prior * math.sqrt(total_N + 1e-8) / (1 + child.visits)
+                    score = child.q + u
+                    if score > best_score:
+                        best_score = score
+                        best_action_idx = a_idx
+                path.append((node, best_action_idx))
+                child = node.children[best_action_idx]
+                if child.child_node is None:
+                    if child.next_state is None:
+                        child.next_state = self._apply(node.state, child.action_obj)
+                    child.child_node = MCTSNode(
+                        state=child.next_state,
+                        player_to_move=child.next_state.to_move,
+                    )
+                    self._expand(child.child_node)
+                node = child.child_node
+
+            # Random rollout
+            if node.terminal_value is not None:
+                v = node.terminal_value
+            else:
+                v = self._rollout(node.state, node.player_to_move)
+
+            # Backprop
+            for (parent, a_idx) in reversed(path):
+                ch = parent.children[a_idx]
+                ch.visits += 1
+                ch.value_sum += v
+                parent.visits += 1
+                v = -v
+
+        return {a_idx: ch.visits for a_idx, ch in root.children.items()}
+
+    def _expand(self, node: MCTSNode):
+        if node.state.is_over():
+            node.is_expanded = True
+            if node.state.winner is None:
+                node.terminal_value = 0.0
+            else:
+                node.terminal_value = 1.0 if node.state.winner == node.player_to_move else -1.0
+            return
+
+        actions = node.state.legal_actions()
+        uniform_prior = 1.0 / len(actions)
+        for a in actions:
+            idx = ActionCodec.encode_index(node.state, a)
+            node.children[idx] = MCTSChild(
+                prior=uniform_prior,
+                action_idx=idx,
+                action_obj=a,
+            )
+        node.is_expanded = True
+
+    @staticmethod
+    def _rollout(state: GameState, perspective: Player) -> float:
+        import random as _rand
+        s = state.clone()
+        for _ in range(200):
+            if s.is_over():
+                break
+            actions = s.legal_actions()
+            if not actions:
+                break
+            a = _rand.choice(actions)
+            if isinstance(a, PlacementAction):
+                s = s.apply_placement(a)
+            else:
+                s = s.apply_turn(a)
+        if s.winner is None:
+            return 0.0
+        return 1.0 if s.winner == perspective else -1.0
+
+    @staticmethod
+    def _apply(state: GameState, action) -> GameState:
+        if isinstance(action, PlacementAction):
+            return state.apply_placement(action)
+        else:
+            return state.apply_turn(action)
+
 
 def heuristic_value(state: GameState, player: Player) -> float:
     if state.is_over():
