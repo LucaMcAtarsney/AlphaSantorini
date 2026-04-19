@@ -137,7 +137,6 @@ class GameState:
                 for build_at in self.adjacency_coords(move_to):
 
                     is_valid_build = (
-                        build_at != move_from and
                         not self.is_occupied(build_at) and
                         not self.board.is_dome(build_at)
                     )
@@ -217,7 +216,6 @@ class GameState:
     
     def to_dict(self):
 
-        # Workers are originally stored as a tuple so they need to be converted into something serializable
         serializable_workers = {
             f"{player.name}_{index}": coord
             for (player, index), coord in self.workers.items()
