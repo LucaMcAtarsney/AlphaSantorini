@@ -13,11 +13,11 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import torch.multiprocessing as mp
 
-from santorini.game_types import TurnAction, TOTAL_ACTIONS
-from santorini.mcts import MCTS, ActionCodec, encode_state_planes
-from santorini.nn.model import PolicyValueNet
-from santorini.state import GameState
-from santorini.enums import Player
+from engine.game_types import TurnAction, TOTAL_ACTIONS
+from engine.mcts import MCTS, ActionCodec, encode_state_planes
+from engine.nn.model import PolicyValueNet
+from engine.state import GameState
+from engine.enums import Player
 
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
