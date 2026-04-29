@@ -20,7 +20,7 @@ SIMS=${2:-200}
 
 echo "Benchmark: MCTS-NN vs Greedy  |  Games: $GAMES  |  Sims: $SIMS"
 
-python hpt_tournament.py \
+python tournament.py \
     --model_path checkpoints/koalemos.pth \
     --agents MCTS-NN Greedy \
     --games_per_matchup "$GAMES" \

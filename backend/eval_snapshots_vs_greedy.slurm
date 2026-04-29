@@ -45,7 +45,7 @@ for SNAPSHOT in "${SNAPSHOTS[@]}"; do
 
     python tournament.py \
         --model_path "$SNAPSHOT" \
-        --agents NN-MCTS Greedy \
+        --agents MCTS-NN Greedy \
         --games_per_matchup "$GAMES_PER_MATCHUP" \
         --mcts_sims "$MCTS_SIMS" \
         --csv "$RESULTS_DIR/${BASENAME}_summary.csv" \

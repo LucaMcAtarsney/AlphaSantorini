@@ -19,7 +19,7 @@ SIMS=${2:-200}
 
 python tournament.py \
     --model_path checkpoints/koalemos.pth \
-    --agents NN-MCTS Greedy \
+    --agents MCTS-NN Greedy \
     --games_per_matchup "$GAMES" \
     --mcts_sims "$SIMS"
 

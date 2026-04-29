@@ -133,12 +133,12 @@ def main():
         "Greedy": lambda p: GreedyAgent(player=p),
         "Heuristic": lambda p: HeuristicAgent(player=p),
         "Minimax-d2": lambda p: MinimaxAgent(player=p, depth=2),
-        "Standard-MCTS": lambda p: VanillaMCTSAgent(player=p, sims=sims),
-        "NN-MCTS": lambda p: MCTSAgent.from_checkpoint(
+        "Vanilla-MCTS": lambda p: VanillaMCTSAgent(player=p, sims=sims),
+        "MCTS-NN": lambda p: MCTSAgent.from_checkpoint(
             player=p, checkpoint_path=checkpoint,
             sims=sims, device="auto", use_heuristic=False,
         ),
-        "Heuristic-MCTS": lambda p: MCTSAgent.from_checkpoint(
+        "MCTS-Heuristic": lambda p: MCTSAgent.from_checkpoint(
             player=p, checkpoint_path=checkpoint,
             sims=sims, device="auto", use_heuristic=True,
         ),
