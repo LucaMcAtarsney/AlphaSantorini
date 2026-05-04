@@ -98,3 +98,6 @@ junit-*.xml
 *.rda
 *.iml
 .idea/
+
+.godot/
+/android/

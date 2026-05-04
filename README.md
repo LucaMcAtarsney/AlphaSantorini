@@ -1,57 +1,58 @@
 # EPA
 
-EPA contains a Santorini game engine, AI agents, training/evaluation scripts, and a small FastAPI backend. The project is currently backend-first; a Godot frontend can be added later as a sibling folder at the repository root.
+EPA has three main parts:
 
-Most backend scripts were developed for an HPC environment with SLURM, CUDA, and a Python virtual environment inside `backend/`. In the current state, commands should be run from the `backend/` directory unless noted otherwise.
+- a Python backend containing the Santorini rules engine, AI agents, training scripts, tournament/evaluation scripts and FastAPI API
+- a Godot frontend for interacting with the game visually
+- exported desktop builds under `builds/`
 
-## Repository Layout
+The frontend and exported builds do not run the Python game logic by themselves. They call the FastAPI backend over HTTP, so Uvicorn must be running before you can interact with the frontend.
+
+## Project Layout
 
 ```text
 EPA/
   README.md
+  .gitignore
   backend/
-    api.py                         # FastAPI game API
-    main.py                        # Interactive CLI smoke-test/simulation helper
+    api.py                         # FastAPI game API used by the frontend
+    main.py                        # Interactive CLI
     tournament.py                  # Agent tournament runner
     train_selfplay.py              # Self-play training loop
     generate_results_charts.py     # Chart generation from result CSVs
-    generate_snapshot_analysis.py  # Snapshot ranking/plot generation
-    requirements.txt               # Cross-platform backend dependencies
-    hpc_requirements.txt           # Minimal HPC training dependencies
-    engine/                        # Santorini rules, MCTS, agents, neural net
+    generate_snapshot_analysis.py  # Snapshot ranking / plot generation
+    requirements.txt               # Local backend dependencies
+    hpc_requirements.txt           # HPC training dependencies
+    engine/                        # Santorini rules, MCTS, agents, neural network
     checkpoints/                   # Model checkpoints
     data/                          # Dataset files
     slurms/                        # HPC SLURM jobs
     tests/                         # Experiment SLURM jobs
     charts/                        # Generated charts
+    results/                       # Generated experiment outputs
+  frontend/
+    project.godot                  # Godot project
+    Scenes/                        # Godot scenes
+    Scripts/                       # Godot scripts
+    export_presets.cfg             # Godot export presets
+    *.glb, *.ttf                   # Frontend assets
+  builds/
+    linux/                         # Linux export
+    mac/                           # macOS export
+    windows/                       # Windows export
 ```
 
-## Important Working Directory Note
-
-The backend imports `engine` as a top-level package, for example:
-
-```python
-from engine.state import GameState
-```
-
-Because of that, run backend commands from inside `backend/`:
+Most backend commands assume the current working directory is `backend/`.
 
 ```bash
 cd backend
 ```
 
-Running commands from the repository root may fail unless you explicitly set `PYTHONPATH=backend`.
+## Backend Setup
 
-## Environment
+### macOS / Linux
 
-The backend has two requirements files:
-
-```text
-requirements.txt      # Normal local install for macOS, Windows, or Linux
-hpc_requirements.txt  # Minimal HPC training dependencies
-```
-
-Typical local setup:
+From the repository root:
 
 ```bash
 cd backend
@@ -60,29 +61,87 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-On HPC, use the minimal HPC requirements file instead. The cluster environment is expected to provide the remaining tools/modules needed by the job scripts:
+### Windows PowerShell
 
-```bash
-module load python/3.13.0
-module load cuda/12.4.1
-source venv/bin/activate
-pip install -r hpc_requirements.txt
+From the repository root:
+
+```powershell
+cd backend
+py -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
-The checked-in SLURM scripts were written around this HPC setup. The normal `requirements.txt` is intended for local development and includes packages that may not be available on the HPC package indexes.
+### VS Code Interpreter
 
-## Running the API
+Select the Python interpreter inside the backend virtual environment:
 
-From `backend/`:
+```text
+backend/venv/bin/python              # macOS / Linux
+backend\venv\Scripts\python.exe      # Windows
+```
+
+## Run the API First
+
+The Godot frontend is configured to call:
+
+```text
+http://127.0.0.1:8000
+```
+
+Start the backend API before opening the frontend or exported builds:
 
 ```bash
+cd backend
 source venv/bin/activate
 uvicorn api:app --reload
 ```
 
-The API keeps a single in-memory game state. Restarting the server resets that state.
+On Windows PowerShell:
 
-Main endpoints:
+```powershell
+cd backend
+.\venv\Scripts\Activate.ps1
+uvicorn api:app --reload
+```
+
+Check that the API is running by opening:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Keep this terminal open while using the frontend. If Uvicorn is stopped, the frontend will not be able to fetch the game state, reset games, step agents or submit moves.
+
+## Run the Frontend
+
+### From Godot
+
+1. Start the API with Uvicorn first.
+2. Open `frontend/project.godot` in Godot.
+3. Run the main scene from the Godot editor.
+
+The frontend talks to the backend through `frontend/Scripts/Network.gd`, which defaults to:
+
+```text
+http://127.0.0.1:8000
+```
+
+### Exported Builds
+
+Start the API first, then run the build for your platform:
+
+```text
+builds/linux/SantoriniLINUX.x86_64
+builds/mac/SantoriniMAC.dmg
+builds/windows/SantoriniWINDOWS.exe
+```
+
+The exported builds also expect the API to be available at `http://127.0.0.1:8000`.
+
+## API Endpoints
+
+The API is defined in `backend/api.py`.
 
 ```text
 GET  /game
@@ -113,17 +172,11 @@ mcts-nn
 mcts-heuristic
 ```
 
-The MCTS neural-network agents expect a checkpoint at:
+The API keeps one in-memory game state. Restarting Uvicorn resets the game.
 
-```text
-backend/checkpoints/koalemos.pth
-```
+## Run Backend Checks
 
-If PyTorch or the checkpoint is unavailable, use non-neural agents such as `human`, `greedy`, `heuristic`, or `minimax-d2`.
-
-## Running a Small CLI Check
-
-There is an interactive helper:
+### Interactive Helper
 
 ```bash
 cd backend
@@ -131,30 +184,24 @@ source venv/bin/activate
 python main.py
 ```
 
-This can print a basic placement/turn test or simulate games between selected agents. Neural agents still require PyTorch and a valid checkpoint.
+Choose option `1` for a basic placement/turn test. Option `2` simulates games between selected agents.
 
-## Running Tournaments
+### Small Tournament Without Neural Agents
 
-Basic tournament:
+This avoids checkpoints and is the fastest useful tournament check:
 
 ```bash
 cd backend
 source venv/bin/activate
+mkdir -p results
 python tournament.py \
-  --model_path checkpoints/koalemos.pth \
-  --games_per_matchup 10 \
-  --mcts_sims 200
+  --agents Greedy Random \
+  --games_per_matchup 4 \
+  --csv results/greedy_vs_random_summary.csv \
+  --csv_games results/greedy_vs_random_games.csv
 ```
 
-Restrict to specific agents:
-
-```bash
-python tournament.py \
-  --agents Random Greedy Heuristic Minimax-d2 \
-  --games_per_matchup 100 \
-  --csv results/baseline_summary.csv \
-  --csv_games results/baseline_games.csv
-```
+If this succeeds, `tournament.py`, the game engine and the basic agents are working.
 
 Accepted tournament agent names:
 
@@ -168,32 +215,65 @@ MCTS-NN
 MCTS-Heuristic
 ```
 
-## HPC / SLURM Usage
+The neural/MCTS checkpoint agents expect:
 
-Submit SLURM jobs from inside `backend/` so relative paths resolve correctly:
+```text
+checkpoints/koalemos.pth
+```
+
+## HPC Setup
+
+There are two dependency files because the local and HPC environments are different.
+
+```text
+requirements.txt      # macOS / Windows / normal Linux local development
+hpc_requirements.txt  # HPC dependencies only
+```
+
+Use `requirements.txt` on your own machine. Use `hpc_requirements.txt` on the HPC.
+
+The SLURM scripts assume they are submitted from inside `backend/`.
+
+```bash
+cd backend
+module load python/3.13.0
+module load cuda/12.4.1
+python -m venv venv
+source venv/bin/activate
+pip install -r hpc_requirements.txt
+```
+
+Do this:
 
 ```bash
 cd backend
 sbatch slurms/tournament.slurm
 ```
 
+Avoid this:
+
+```bash
+sbatch backend/slurms/tournament.slurm
+```
+
 Common jobs:
 
 ```text
-slurms/tournament.slurm                         # Full tournament run
+slurms/tournament.slurm                         # Full tournament
 slurms/generate_models.slurm                    # Self-play training with snapshots
-slurms/eval_snapshots_vs_greedy.slurm           # Evaluate snapshots oldest/default order
+slurms/eval_snapshots_vs_greedy.slurm           # Evaluate snapshots
 slurms/eval_snapshots_vs_greedy_reverse.slurm   # Evaluate snapshots newest first
 tests/T1_full_tournament.slurm                  # Full experiment tournament
-tests/T2_baseline_agents.slurm                  # Baseline agent experiment
-tests/T3_search_agents.slurm                    # Search-agent experiment
+tests/T2_baseline_agents.slurm                  # Baseline agents
+tests/T3_search_agents.slurm                    # Search agents
 tests/T4_sim_budget_sweep.slurm                 # Simulation budget sweep
-tests/T5_nn_vs_baselines.slurm                  # NN-MCTS vs baseline agents
+tests/T5_nn_vs_baselines.slurm                  # NN-MCTS vs baselines
 ```
 
-Example with arguments:
+Snapshot evaluation example:
 
 ```bash
+cd backend
 sbatch slurms/eval_snapshots_vs_greedy_reverse.slurm \
   checkpoints/iterations_koalemos \
   results/snapshot_vs_greedy_reverse \
@@ -201,32 +281,18 @@ sbatch slurms/eval_snapshots_vs_greedy_reverse.slurm \
   100
 ```
 
-The SLURM scripts assume:
-
-```text
-backend/venv/
-backend/checkpoints/
-backend/results/
-backend/tournament.py
-backend/train_selfplay.py
-```
+The snapshot scripts require `.pth` files in the snapshot directory.
 
 ## Training
 
-Self-play training is handled by:
-
-```bash
-python train_selfplay.py
-```
-
-The HPC-oriented training script is usually preferred:
+Training is intended for HPC/GPU use.
 
 ```bash
 cd backend
 sbatch slurms/generate_models.slurm
 ```
 
-Default paths used by the training scripts:
+Default training paths:
 
 ```text
 checkpoints/koalemos.pth
@@ -234,34 +300,58 @@ checkpoints/progress_koalemos.json
 checkpoints/iterations_koalemos/
 ```
 
-Training is computationally expensive and was designed for GPU-backed HPC runs.
-
-## Charts and Snapshot Analysis
-
-After tournament/test jobs produce CSV files under `backend/results/`, generate charts with:
+You can also run the Python training script directly, but this can be slow locally:
 
 ```bash
 cd backend
 source venv/bin/activate
-python generate_results_charts.py
+python train_selfplay.py
 ```
 
-Snapshot analysis example:
+## Common Problems
+
+### Frontend Cannot Connect
+
+Make sure Uvicorn is running before launching the frontend:
 
 ```bash
-python generate_snapshot_analysis.py \
-  results/snapshot_vs_greedy_reverse \
-  --csv-out results/snapshot_ranked.csv \
-  --plot-out charts/snapshot_vs_greedy_reverse_progress.svg \
-  --title "Checkpoint win rate vs Greedy over training"
+cd backend
+source venv/bin/activate
+uvicorn api:app --reload
 ```
 
-These scripts expect the relevant CSV outputs to already exist.
+Then check:
 
-## Current Limitations
+```text
+http://127.0.0.1:8000/docs
+```
 
-- The backend is not packaged as an installable Python package yet.
-- Most paths are relative to `backend/`.
-- Training and large evaluations assume HPC access.
-- Local testing depends on having compatible PyTorch installed.
-- The API stores game state in memory and is intended for a single active game/session.
+If the frontend is running on a different machine, update the frontend API base URL or start Uvicorn with `--host 0.0.0.0` on a trusted network.
+
+### `ModuleNotFoundError: No module named 'engine'`
+
+You are probably running from the repository root. Run backend scripts from `backend/`:
+
+```bash
+cd backend
+python main.py
+```
+
+Or set:
+
+```bash
+PYTHONPATH=backend
+```
+
+### `ModuleNotFoundError: No module named 'torch'`
+
+The active Python environment does not have PyTorch installed or VS Code is using the wrong interpreter. Select the interpreter inside `backend/venv/`, then retry.
+
+### SLURM Cannot Find `venv`, `tournament.py` or `checkpoints`
+
+Submit the job from inside `backend/`:
+
+```bash
+cd backend
+sbatch tests/T2_baseline_agents.slurm
+```

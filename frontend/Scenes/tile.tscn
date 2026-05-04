@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://d0426ge2b51o7"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_y18ax"]
+albedo_color = Color(0.53900033, 0.53900033, 0.53900033, 0.9843137)
+
+[node name="Tile" type="Node3D"]
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+transform = Transform3D(5, 0, 0, 0, 0.125, 0, 0, 0, 5, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_y18ax")

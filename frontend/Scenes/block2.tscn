@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://p27ob3xpvk63"]
+
+[ext_resource type="PackedScene" uid="uid://d3eo3xfd18t40" path="res://santorini mid.glb" id="1_2dlcr"]
+
+[node name="Block2" type="Node3D"]
+
+[node name="santorini mid" parent="." instance=ExtResource("1_2dlcr")]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.009, -1.2274507, 0)

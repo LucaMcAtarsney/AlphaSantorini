@@ -1,0 +1,10 @@
+[gd_scene load_steps=0 format=3 uid="uid://b2x4ntf0wb4s1"]
+
+[node name="WorkerTwo" type="Node3D"]
+
+[node name="Body" type="CSGCylinder3D" parent="."]
+radius = 0.45
+height = 0.8
+
+[node name="Head" type="CSGSphere3D" parent="."]
+transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, 0, 0.75, 0)

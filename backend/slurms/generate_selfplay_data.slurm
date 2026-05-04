@@ -31,6 +31,6 @@ python train_selfplay.py \
     --learning_rate 0.001 \
     --promotion_games 5 \
     --promotion_sims 50 \
-    --promotion_threshold 1.0
+    --promotion_threshold 0.55
 
 echo "Job finished at $(date)."

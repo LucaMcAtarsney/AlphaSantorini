@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://cd3b7o7wxm5fw"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fsd7l"]
+metallic_specular = 0.0
+
+[node name="Block" type="Node3D"]
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+material = SubResource("StandardMaterial3D_fsd7l")

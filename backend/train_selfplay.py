@@ -446,7 +446,7 @@ def main():
     parser.add_argument("--no_promotion", action="store_true", help="Disable promotion gate (always accept new weights).")
     parser.add_argument("--promotion_games", type=int, default=5, help="Number of games for promotion evaluation.")
     parser.add_argument("--promotion_sims", type=int, default=50, help="MCTS sims per move during promotion games (can be lower than training sims).")
-    parser.add_argument("--promotion_threshold", type=float, default=0.8, help="Candidate must reach this win-rate to be promoted (0-1).")
+    parser.add_argument("--promotion_threshold", type=float, default=0.55, help="Candidate must reach this win-rate to be promoted (0-1).")
 
     args = parser.parse_args()
     train(args)

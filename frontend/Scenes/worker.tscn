@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dd1va202o2ijw"]
+
+[node name="Worker" type="Node3D"]
+
+[node name="CSGCylinder3D" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.40474856, 0, 0, 0, 1, 0, 0, 0)

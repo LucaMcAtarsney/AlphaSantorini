@@ -1,0 +1,447 @@
+[gd_scene load_steps=22 format=3 uid="uid://dgxx085xgcncp"]
+
+[ext_resource type="Script" uid="uid://dtm6n0pu52bxu" path="res://Scripts/BoardRenderer.gd" id="1_vjyv8"]
+[ext_resource type="PackedScene" uid="uid://d0426ge2b51o7" path="res://Scenes/tile.tscn" id="2_hm3vq"]
+[ext_resource type="PackedScene" uid="uid://d2l8topg8bxwx" path="res://Scenes/block1.tscn" id="3_iehwj"]
+[ext_resource type="PackedScene" uid="uid://p27ob3xpvk63" path="res://Scenes/block2.tscn" id="4_7iy1p"]
+[ext_resource type="PackedScene" uid="uid://djhnyvwhvfrrg" path="res://Scenes/block3.tscn" id="5_o5s4g"]
+[ext_resource type="PackedScene" uid="uid://fhgepa1vrr7w" path="res://Scenes/dome.tscn" id="6_2cdyc"]
+[ext_resource type="PackedScene" uid="uid://dd1va202o2ijw" path="res://Scenes/worker.tscn" id="7_qjv7d"]
+[ext_resource type="PackedScene" uid="uid://c6pl6clnv0h3u" path="res://Scenes/worker_one.tscn" id="8_1worker"]
+[ext_resource type="PackedScene" uid="uid://b2x4ntf0wb4s1" path="res://Scenes/worker_two.tscn" id="9_2worker"]
+[ext_resource type="Script" uid="uid://stjra22h3ull" path="res://Scripts/camera_rig.gd" id="11_abmxi"]
+[ext_resource type="FontFile" uid="uid://cjk08abfdk2ol" path="res://BoldPixels.ttf" id="12_mc7rj"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_q48v1"]
+sky_top_color = Color(0.74474305, 0.6883991, 1, 1)
+sky_horizon_color = Color(0.7893777, 0.7429215, 1, 1)
+sky_curve = 0.12183802
+ground_bottom_color = Color(0.6330012, 0.5236446, 0.9999991, 1)
+ground_horizon_color = Color(0.7882353, 0.7411765, 1, 1)
+ground_curve = 0.17559876
+energy_multiplier = 0.5
+
+[sub_resource type="Sky" id="Sky_ekr2m"]
+sky_material = SubResource("ProceduralSkyMaterial_q48v1")
+
+[sub_resource type="Environment" id="Environment_dkiud"]
+background_mode = 2
+background_energy_multiplier = 1.5
+sky = SubResource("Sky_ekr2m")
+ambient_light_color = Color(0.5547407, 0.4561506, 0.77846265, 1)
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 1.13
+glow_bloom = 0.05
+glow_hdr_threshold = 0.85
+glow_hdr_scale = 0.85
+fog_enabled = true
+fog_mode = 1
+fog_light_color = Color(0.36414757, 0.256761, 0.6002807, 1)
+fog_light_energy = 16.0
+fog_density = 1.0
+fog_aerial_perspective = 0.039
+fog_sky_affect = 0.026
+fog_height = -429.89
+fog_depth_curve = 22.627342
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vw4oq"]
+albedo_color = Color(0.65628535, 0.6562854, 0.6562854, 1)
+metallic_specular = 0.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+bg_color = Color(0.965, 0.955, 0.995, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 0.8)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0.61, 0.57, 0.76, 0.14)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_pressed"]
+content_margin_left = 18.0
+content_margin_top = 15.0
+content_margin_right = 18.0
+content_margin_bottom = 13.0
+bg_color = Color(0.945, 0.935, 0.985, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.97, 0.97, 1, 0.85)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0.57, 0.52, 0.73, 0.12)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+bg_color = Color(0.985, 0.975, 1, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 0.95)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0.67, 0.61, 0.88, 0.22)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mode_panel"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.965, 0.955, 0.995, 0.82)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 0.7)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0.61, 0.57, 0.76, 0.12)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_player_card_active"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.985, 0.975, 1, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 0.95)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0.67, 0.61, 0.88, 0.22)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_player_card"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.965, 0.955, 0.995, 0.88)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 0.75)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0.61, 0.57, 0.76, 0.14)
+shadow_size = 8
+
+[node name="BoardRoot" type="Node3D"]
+script = ExtResource("1_vjyv8")
+tile_scene = ExtResource("2_hm3vq")
+block_scene1 = ExtResource("3_iehwj")
+block_scene2 = ExtResource("4_7iy1p")
+block_scene3 = ExtResource("5_o5s4g")
+dome_scene = ExtResource("6_2cdyc")
+worker_scene = ExtResource("7_qjv7d")
+worker_scene_one = ExtResource("8_1worker")
+worker_scene_two = ExtResource("9_2worker")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_dkiud")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.8660254, -0.50000006, -2.1855696e-08, 0, -4.371139e-08, 1, -0.50000006, 0.8660254, 3.7855173e-08, 0, 0, 0)
+light_energy = 0.083
+light_volumetric_fog_energy = 0.254
+sky_mode = 1
+
+[node name="BoardAnchor" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -50.10733, 0)
+
+[node name="Terrain" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -100.10733, 0)
+material_override = SubResource("StandardMaterial3D_vw4oq")
+size = Vector3(30, 100, 30)
+
+[node name="Bottom" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -186.38034, 0)
+material_override = SubResource("StandardMaterial3D_vw4oq")
+size = Vector3(30, 100, 30)
+
+[node name="CameraRig" type="Node3D" parent="."]
+script = ExtResource("11_abmxi")
+target_path = NodePath("../BoardAnchor")
+
+[node name="Pitch" type="Node3D" parent="CameraRig"]
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/Pitch"]
+transform = Transform3D(1, 0, 0, 0, 0.6845471, 0.7289687, 0, -0.7289687, 0.6845471, 0, 14.03339, 17.189224)
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI"]
+offset_left = 24.0
+offset_top = 23.0
+offset_right = 1165.0
+offset_bottom = 108.0
+theme_override_constants/separation = 14
+
+[node name="Reset" type="Button" parent="UI/HBoxContainer"]
+custom_minimum_size = Vector2(172, 82)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_colors/font_focus_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_colors/font_pressed_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_colors/font_hover_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_button_hover")
+text = "Reset"
+
+[node name="GameState" type="Button" parent="UI/HBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(172, 82)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_colors/font_focus_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_button_hover")
+text = "Print GameState"
+
+[node name="Step" type="Button" parent="UI/HBoxContainer"]
+custom_minimum_size = Vector2(172, 82)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_colors/font_focus_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_colors/font_pressed_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_colors/font_hover_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_button_hover")
+text = "Step"
+
+[node name="Play" type="Button" parent="UI/HBoxContainer"]
+custom_minimum_size = Vector2(194, 82)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_colors/font_focus_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_colors/font_pressed_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_colors/font_hover_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_button_hover")
+text = "▶ Play"
+
+[node name="PlayTimer" type="Timer" parent="UI"]
+wait_time = 2.0
+
+[node name="ModePanel" type="PanelContainer" parent="UI"]
+custom_minimum_size = Vector2(200, 0)
+offset_left = 24.0
+offset_top = 322.0
+offset_right = 470.0
+offset_bottom = 506.0
+scale = Vector2(1.5, 1.5)
+theme_override_styles/panel = SubResource("StyleBoxFlat_mode_panel")
+
+[node name="Margin" type="MarginContainer" parent="UI/ModePanel"]
+custom_minimum_size = Vector2(264, 10)
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="UI/ModePanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="UI/ModePanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 20
+text = "Game Mode"
+
+[node name="PlayerOneRow" type="HBoxContainer" parent="UI/ModePanel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Label" type="Label" parent="UI/ModePanel/Margin/VBox/PlayerOneRow"]
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.32, 0.28, 0.41, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 16
+text = "P1"
+
+[node name="Type" type="OptionButton" parent="UI/ModePanel/Margin/VBox/PlayerOneRow"]
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 16
+
+[node name="PlayerTwoRow" type="HBoxContainer" parent="UI/ModePanel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Label" type="Label" parent="UI/ModePanel/Margin/VBox/PlayerTwoRow"]
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.32, 0.28, 0.41, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 16
+text = "P2"
+
+[node name="Type" type="OptionButton" parent="UI/ModePanel/Margin/VBox/PlayerTwoRow"]
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 16
+
+[node name="PlayerCards" type="HBoxContainer" parent="UI"]
+texture_filter = 1
+offset_left = 24.0
+offset_top = 122.0
+offset_right = 562.0
+offset_bottom = 214.0
+scale = Vector2(2, 2)
+theme_override_constants/separation = 18
+
+[node name="PlayerOneCard" type="PanelContainer" parent="UI/PlayerCards"]
+custom_minimum_size = Vector2(260, 92)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_player_card_active")
+
+[node name="Margin" type="MarginContainer" parent="UI/PlayerCards/PlayerOneCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 14
+
+[node name="VBox" type="VBoxContainer" parent="UI/PlayerCards/PlayerOneCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="NameRow" type="HBoxContainer" parent="UI/PlayerCards/PlayerOneCard/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Swatch" type="ColorRect" parent="UI/PlayerCards/PlayerOneCard/Margin/VBox/NameRow"]
+texture_filter = 1
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 2
+color = Color(1, 0.34509805, 0.4, 1)
+
+[node name="Name" type="Label" parent="UI/PlayerCards/PlayerOneCard/Margin/VBox/NameRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 22
+text = "Agent One"
+
+[node name="Spinner" type="Label" parent="UI/PlayerCards/PlayerOneCard/Margin/VBox/NameRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.34509805, 0.4, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 24
+text = "|"
+
+[node name="Status" type="Label" parent="UI/PlayerCards/PlayerOneCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.42, 0.39, 0.5, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 16
+text = "Waiting"
+
+[node name="PlayerTwoCard" type="PanelContainer" parent="UI/PlayerCards"]
+custom_minimum_size = Vector2(260, 92)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_player_card")
+
+[node name="Margin" type="MarginContainer" parent="UI/PlayerCards/PlayerTwoCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 14
+
+[node name="VBox" type="VBoxContainer" parent="UI/PlayerCards/PlayerTwoCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="NameRow" type="HBoxContainer" parent="UI/PlayerCards/PlayerTwoCard/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Swatch" type="ColorRect" parent="UI/PlayerCards/PlayerTwoCard/Margin/VBox/NameRow"]
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 2
+color = Color(0.32156864, 0.57254905, 1, 1)
+
+[node name="Name" type="Label" parent="UI/PlayerCards/PlayerTwoCard/Margin/VBox/NameRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.18, 0.15, 0.26, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 22
+text = "Agent Two"
+
+[node name="Spinner" type="Label" parent="UI/PlayerCards/PlayerTwoCard/Margin/VBox/NameRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.32156864, 0.57254905, 1, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 24
+text = "|"
+
+[node name="Status" type="Label" parent="UI/PlayerCards/PlayerTwoCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.42, 0.39, 0.5, 1)
+theme_override_fonts/font = ExtResource("12_mc7rj")
+theme_override_font_sizes/font_size = 16
+text = "Waiting"
+
+[connection signal="button_up" from="UI/HBoxContainer/Reset" to="." method="_on_reset_button_up"]
+[connection signal="button_up" from="UI/HBoxContainer/GameState" to="." method="_on_game_state_button_up"]
+[connection signal="button_up" from="UI/HBoxContainer/Step" to="." method="_on_step_button_up"]
+[connection signal="button_up" from="UI/HBoxContainer/Play" to="." method="_on_play_button_up"]
+[connection signal="timeout" from="UI/PlayTimer" to="." method="_on_play_timer_timeout"]

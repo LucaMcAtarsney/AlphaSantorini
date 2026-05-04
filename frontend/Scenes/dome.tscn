@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://fhgepa1vrr7w"]
+
+[ext_resource type="PackedScene" uid="uid://b7ikawhm8lme4" path="res://santorini dome.glb" id="1_al3qe"]
+
+[node name="Dome" type="Node3D"]
+
+[node name="santorini dome" parent="." instance=ExtResource("1_al3qe")]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, -0.30764246, 0)
