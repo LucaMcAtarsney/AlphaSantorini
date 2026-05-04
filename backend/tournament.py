@@ -109,7 +109,7 @@ def main():
     parser.add_argument(
         "--agents", type=str, nargs="+", default=None,
         help="Agent names to include (default: all). "
-             "Available: Random, Greedy, Heuristic, Minimax-d2, Standard-MCTS, NN-MCTS, Heuristic-MCTS",
+             "Available: Random, Greedy, Heuristic, Minimax-d2, Vanilla-MCTS, MCTS-NN, MCTS-Heuristic",
     )
     parser.add_argument(
         "--csv", type=str, default="tournament_results.csv",

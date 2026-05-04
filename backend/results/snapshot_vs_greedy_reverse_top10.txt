@@ -1,0 +1,12 @@
+results/snapshot_vs_greedy_reverse
+count=97 min=55.0 max=83.0 mean=69.51 median=70.0 std=5.18
+1. iter_0818_candidate 83.0% (83-17)
+2. iter_0826_candidate 81.0% (81-19)
+3. iter_0851_candidate 81.0% (81-19)
+4. iter_0835_champion 80.0% (80-20)
+5. iter_0823_candidate 79.0% (79-21)
+6. iter_0820_champion_kept 77.0% (77-23)
+7. iter_0806_champion_kept 76.0% (76-24)
+8. iter_0822_candidate 76.0% (76-24)
+9. iter_0850_candidate 76.0% (76-24)
+10. iter_0807_champion_kept 75.0% (75-25)
