@@ -2,7 +2,11 @@ extends Node2D
 
 @onready var http: HTTPRequest = $HTTPRequest
 
-const BASE_URL := "http://127.0.0.1:8000"
+# Resolved at runtime by the Network autoload (reads the web `?api=` param,
+# falls back to localhost on desktop). Use that single source of truth.
+var BASE_URL: String:
+	get:
+		return Network.base_url
 
 enum PendingRequest { NONE, GAME, RESET, STEP }
 var pending: PendingRequest = PendingRequest.NONE

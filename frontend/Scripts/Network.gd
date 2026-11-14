@@ -12,9 +12,19 @@ var _busy := false
 var _pending_fetch_after_post := false
 
 func _ready() -> void:
+	_resolve_base_url()
 	_http = HTTPRequest.new()
 	add_child(_http)
 	_http.request_completed.connect(_on_request_completed)
+
+# On web builds, read the API base URL from the page's `?api=` query parameter,
+# falling back to the localhost default when absent or when running on desktop.
+func _resolve_base_url() -> void:
+	if OS.has_feature("web"):
+		var api := str(JavaScriptBridge.eval("new URLSearchParams(location.search).get('api') || ''", true))
+		if api != "":
+			base_url = api
+	base_url = base_url.rstrip("/")
 
 func fetch_game_state() -> void:
 	_http_get("%s/game" % base_url)

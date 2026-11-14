@@ -1,9 +1,5 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch
-torchvision
-torchaudio
 numpy>=1.24.0
 fastapi>=0.110.0
 uvicorn>=0.27.0
-pandas
-matplotlib
-seaborn

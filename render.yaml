@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: alphasantorini-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    # Pick a paid instance type in the Render dashboard (CPU PyTorch needs the
+    # memory of a Starter plan or higher). Uncomment to pin it from here:
+    # plan: starter

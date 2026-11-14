@@ -1,6 +1,7 @@
 from typing import Dict, List, Literal, Optional, Union
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from engine.agents.greedy_agent import GreedyAgent
@@ -73,6 +74,23 @@ class LegalMovesResponse(BaseModel):
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://pentgon.com",
+        "https://www.pentgon.com",
+        "http://localhost:3000",
+    ],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/")
+def health() -> Dict[str, str]:
+    return {"status": "ok"}
+
 
 game = GameState()
 
