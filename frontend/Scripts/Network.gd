@@ -11,11 +11,21 @@ var _busy := false
 
 var _pending_fetch_after_post := false
 
+# Unique per page-load / app-launch so each visitor gets isolated server state.
+var _session_id := ""
+
 func _ready() -> void:
 	_resolve_base_url()
+	_session_id = _generate_session_id()
 	_http = HTTPRequest.new()
 	add_child(_http)
 	_http.request_completed.connect(_on_request_completed)
+
+func _generate_session_id() -> String:
+	# crypto-free unique id is fine here; collisions just mean a shared board.
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	return "%d-%d-%d" % [Time.get_unix_time_from_system(), rng.randi(), rng.randi()]
 
 # On web builds, read the API base URL from the page's `?api=` query parameter,
 # falling back to the localhost default when absent or when running on desktop.
@@ -50,7 +60,8 @@ func _http_get(url: String) -> void:
 		return
 	_busy = true
 
-	var err := _http.request(url)
+	var headers := ["X-Session-Id: %s" % _session_id]
+	var err := _http.request(url, headers)
 	if err != OK:
 		_busy = false
 		request_failed.emit(-1, "HTTPRequest error: %s" % str(err))
@@ -61,7 +72,7 @@ func _post_json(url: String, payload: Variant) -> void:
 		return
 	_busy = true
 
-	var headers := ["Content-Type: application/json"]
+	var headers := ["Content-Type: application/json", "X-Session-Id: %s" % _session_id]
 	var body := JSON.stringify(payload)
 
 	var err := _http.request(url, headers, HTTPClient.METHOD_POST, body)

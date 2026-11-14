@@ -1,6 +1,8 @@
+import time
+from threading import Lock
 from typing import Dict, List, Literal, Optional, Union
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -24,8 +26,19 @@ AgentKind = Literal[
     "mcts-heuristic",
 ]
 
-MCTS_SIMULATIONS = 200
+# Lowered from 200 for a web-friendly CPU response time (~1-2s/move) while still
+# giving the neural net a meaningful search.
+MCTS_SIMULATIONS = 100
 DEFAULT_CHECKPOINT_PATH = "checkpoints/koalemos.pth"
+
+# Default demo matchup for a fresh session: the neural-net MCTS agent against
+# a solid classical opponent.
+DEFAULT_ONE_TYPE: "AgentKind" = "mcts-nn"
+DEFAULT_TWO_TYPE: "AgentKind" = "minimax-d2"
+
+# Per-session state is kept in memory and evicted after this much inactivity.
+SESSION_TTL_SECONDS = 30 * 60
+MAX_SESSIONS = 500
 
 
 class PlayerMeta(BaseModel):
@@ -46,8 +59,8 @@ class StepResponse(GameStateResponse):
 
 
 class ResetRequest(BaseModel):
-    one_type: AgentKind = "greedy"
-    two_type: AgentKind = "greedy"
+    one_type: AgentKind = DEFAULT_ONE_TYPE
+    two_type: AgentKind = DEFAULT_TWO_TYPE
 
 
 class PlacementMoveRequest(BaseModel):
@@ -90,16 +103,6 @@ app.add_middleware(
 @app.get("/")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
-
-
-game = GameState()
-
-player_types: Dict[Player, AgentKind] = {
-    Player.ONE: "greedy",
-    Player.TWO: "greedy",
-}
-
-agents: Dict[Player, Optional[object]] = {}
 
 
 def create_agent(player: Player, agent_kind: AgentKind):
@@ -155,12 +158,67 @@ def create_agent(player: Player, agent_kind: AgentKind):
     raise ValueError(f"Unsupported agent type: {agent_kind}")
 
 
-def refresh_agents() -> None:
-    global agents
-    agents = {
-        Player.ONE: create_agent(Player.ONE, player_types[Player.ONE]),
-        Player.TWO: create_agent(Player.TWO, player_types[Player.TWO]),
-    }
+class Session:
+    """Per-visitor game state: board, chosen agent types, and live agents."""
+
+    def __init__(self, one_type: AgentKind = DEFAULT_ONE_TYPE, two_type: AgentKind = DEFAULT_TWO_TYPE) -> None:
+        self.player_types: Dict[Player, AgentKind] = {
+            Player.ONE: one_type,
+            Player.TWO: two_type,
+        }
+        self.game = GameState()
+        self.agents: Dict[Player, Optional[object]] = {}
+        self.last_seen = time.monotonic()
+        self.refresh_agents()
+
+    def refresh_agents(self) -> None:
+        self.agents = {
+            Player.ONE: create_agent(Player.ONE, self.player_types[Player.ONE]),
+            Player.TWO: create_agent(Player.TWO, self.player_types[Player.TWO]),
+        }
+
+
+class SessionStore:
+    """In-memory session store with inactivity-based eviction and a size cap."""
+
+    def __init__(self) -> None:
+        self._sessions: Dict[str, Session] = {}
+        self._lock = Lock()
+
+    def _evict_expired(self, now: float) -> None:
+        expired = [
+            sid for sid, session in self._sessions.items()
+            if now - session.last_seen > SESSION_TTL_SECONDS
+        ]
+        for sid in expired:
+            del self._sessions[sid]
+
+    def get_or_create(self, sid: str) -> Session:
+        now = time.monotonic()
+        with self._lock:
+            self._evict_expired(now)
+            session = self._sessions.get(sid)
+            if session is None:
+                if len(self._sessions) >= MAX_SESSIONS:
+                    oldest = min(self._sessions, key=lambda key: self._sessions[key].last_seen)
+                    del self._sessions[oldest]
+                session = Session()
+                self._sessions[sid] = session
+            session.last_seen = now
+            return session
+
+
+store = SessionStore()
+
+
+def resolve_session(
+    x_session_id: Optional[str] = Header(default=None),
+    sid: Optional[str] = None,
+) -> Session:
+    # Prefer the X-Session-Id header, fall back to a ?sid= query param, and finally
+    # to a shared "default" session so header-less clients (desktop) still work.
+    key = x_session_id or sid or "default"
+    return store.get_or_create(key)
 
 
 def worker_label_map() -> Dict[tuple, str]:
@@ -190,8 +248,8 @@ def format_action(action: Union[PlacementAction, TurnAction]) -> str:
     )
 
 
-def agent_display_name(player: Player) -> str:
-    agent_kind = player_types[player]
+def agent_display_name(session: "Session", player: Player) -> str:
+    agent_kind = session.player_types[player]
     if agent_kind == "human":
         return f"Player {player.name.title()}"
     return {
@@ -225,18 +283,19 @@ def serialize_workers(state: GameState) -> Dict[str, List[int]]:
     
 
 
-def serialize_game_state(state: GameState) -> GameStateResponse:
+def serialize_game_state(session: "Session") -> GameStateResponse:
+    state = session.game
     return GameStateResponse(
         board=state.board.heights,
         workers=serialize_workers(state),
         current_player=state.to_move.name,
         players={
             "ONE": PlayerMeta(
-                name=agent_display_name(Player.ONE),
+                name=agent_display_name(session, Player.ONE),
                 is_thinking=False,
             ),
             "TWO": PlayerMeta(
-                name=agent_display_name(Player.TWO),
+                name=agent_display_name(session, Player.TWO),
                 is_thinking=False,
             ),
         },
@@ -249,8 +308,8 @@ def response_dict(response: BaseModel) -> Dict:
     return response.dict()
 
 
-def any_human_players() -> bool:
-    return any(kind == "human" for kind in player_types.values())
+def any_human_players(session: "Session") -> bool:
+    return any(kind == "human" for kind in session.player_types.values())
 
 
 def apply_action(state: GameState, action: Union[PlacementAction, TurnAction]) -> GameState:
@@ -259,21 +318,20 @@ def apply_action(state: GameState, action: Union[PlacementAction, TurnAction]) -
     return state.apply_turn(action)
 
 
-def auto_advance_ai_turns() -> List[str]:
-    global game
+def auto_advance_ai_turns(session: "Session") -> List[str]:
     actions_taken: List[str] = []
-    if not any_human_players():
+    if not any_human_players(session):
         return actions_taken
 
-    while not game.is_over() and player_types[game.to_move] != "human":
-        agent = agents.get(game.to_move)
-        legal_actions = game.legal_actions()
+    while not session.game.is_over() and session.player_types[session.game.to_move] != "human":
+        agent = session.agents.get(session.game.to_move)
+        legal_actions = session.game.legal_actions()
         if agent is None or not legal_actions:
             break
-        action = agent.select_action(game, legal_actions)
+        action = agent.select_action(session.game, legal_actions)
         if action is None:
             break
-        game = apply_action(game, action)
+        session.game = apply_action(session.game, action)
         actions_taken.append(format_action(action))
     return actions_taken
 
@@ -302,7 +360,8 @@ def parse_coord(raw: List[int], field_name: str) -> tuple:
     return (row, col)
 
 
-def parse_move_request(payload: MoveRequest) -> Union[PlacementAction, TurnAction]:
+def parse_move_request(session: "Session", payload: MoveRequest) -> Union[PlacementAction, TurnAction]:
+    game = session.game
     current_player = game.to_move
     if payload.type == "placement":
         coord = parse_coord(payload.to, "to")
@@ -342,9 +401,9 @@ def parse_move_request(payload: MoveRequest) -> Union[PlacementAction, TurnActio
     )
 
 
-def legal_moves_payload() -> List[Dict]:
+def legal_moves_payload(session: "Session") -> List[Dict]:
     moves: List[Dict] = []
-    for action in game.legal_actions():
+    for action in session.game.legal_actions():
         if isinstance(action, PlacementAction):
             moves.append({
                 "type": "placement",
@@ -363,86 +422,88 @@ def legal_moves_payload() -> List[Dict]:
     return moves
 
 
-refresh_agents()
-
-
 @app.get("/game", response_model=GameStateResponse)
-def get_game_state() -> GameStateResponse:
-    return serialize_game_state(game)
+def get_game_state(session: Session = Depends(resolve_session)) -> GameStateResponse:
+    return serialize_game_state(session)
 
 
 @app.post("/game/reset", response_model=StepResponse)
-def reset_game(payload: Optional[ResetRequest] = None) -> StepResponse:
-    global game, player_types
+def reset_game(
+    payload: Optional[ResetRequest] = None,
+    session: Session = Depends(resolve_session),
+) -> StepResponse:
     payload = payload or ResetRequest()
 
-    game = GameState()
-    player_types = {
+    session.game = GameState()
+    session.player_types = {
         Player.ONE: payload.one_type,
         Player.TWO: payload.two_type,
     }
-    refresh_agents()
-    actions_taken = auto_advance_ai_turns()
+    session.refresh_agents()
+    actions_taken = auto_advance_ai_turns(session)
 
     message = None
     if actions_taken:
         message = " | ".join(actions_taken)
 
     return StepResponse(
-        **response_dict(serialize_game_state(game)),
+        **response_dict(serialize_game_state(session)),
         message=message,
     )
 
 
 @app.post("/game/step", response_model=StepResponse)
-def game_step() -> StepResponse:
-    global game
+def game_step(session: Session = Depends(resolve_session)) -> StepResponse:
+    game = session.game
 
     if game.is_over():
-        return StepResponse(**response_dict(serialize_game_state(game)), message="Game over")
+        return StepResponse(**response_dict(serialize_game_state(session)), message="Game over")
 
-    if player_types[game.to_move] == "human":
+    if session.player_types[game.to_move] == "human":
         return StepResponse(
-            **response_dict(serialize_game_state(game)),
+            **response_dict(serialize_game_state(session)),
             message="Current player is human; use /game/move",
         )
 
-    agent = agents.get(game.to_move)
+    agent = session.agents.get(game.to_move)
     legal_actions = game.legal_actions()
     if not legal_actions or agent is None:
         return StepResponse(
-            **response_dict(serialize_game_state(game)),
+            **response_dict(serialize_game_state(session)),
             message="No actions available",
         )
 
     action = agent.select_action(game, legal_actions)
     if action is None:
         return StepResponse(
-            **response_dict(serialize_game_state(game)),
+            **response_dict(serialize_game_state(session)),
             message="Agent did not return a valid action",
         )
 
-    game = apply_action(game, action)
-    chained_actions = auto_advance_ai_turns()
+    session.game = apply_action(game, action)
+    chained_actions = auto_advance_ai_turns(session)
     action_strings = [format_action(action), *chained_actions]
 
     return StepResponse(
-        **response_dict(serialize_game_state(game)),
+        **response_dict(serialize_game_state(session)),
         action=" | ".join(action_strings),
     )
 
 
 @app.post("/game/move", response_model=StepResponse)
-def game_move(payload: MoveRequest) -> StepResponse:
-    global game
+def game_move(
+    payload: MoveRequest,
+    session: Session = Depends(resolve_session),
+) -> StepResponse:
+    game = session.game
 
     if game.is_over():
         raise HTTPException(status_code=400, detail="Game is already over")
 
-    if player_types[game.to_move] != "human":
+    if session.player_types[game.to_move] != "human":
         raise HTTPException(status_code=400, detail="Current player is not human")
 
-    submitted_action = parse_move_request(payload)
+    submitted_action = parse_move_request(session, payload)
     legal_actions = game.legal_actions()
     matched_action = next(
         (action for action in legal_actions if action_matches(submitted_action, action)),
@@ -451,19 +512,19 @@ def game_move(payload: MoveRequest) -> StepResponse:
     if matched_action is None:
         raise HTTPException(status_code=400, detail="Illegal move")
 
-    game = apply_action(game, matched_action)
-    chained_actions = auto_advance_ai_turns()
+    session.game = apply_action(game, matched_action)
+    chained_actions = auto_advance_ai_turns(session)
     action_strings = [format_action(matched_action), *chained_actions]
 
     return StepResponse(
-        **response_dict(serialize_game_state(game)),
+        **response_dict(serialize_game_state(session)),
         action=" | ".join(action_strings),
     )
 
 
 @app.get("/game/legal_moves", response_model=LegalMovesResponse)
-def get_legal_moves() -> LegalMovesResponse:
+def get_legal_moves(session: Session = Depends(resolve_session)) -> LegalMovesResponse:
     return LegalMovesResponse(
-        current_player=game.to_move.name,
-        moves=legal_moves_payload(),
+        current_player=session.game.to_move.name,
+        moves=legal_moves_payload(session),
     )

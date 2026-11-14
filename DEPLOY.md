@@ -45,3 +45,10 @@ falls back to `http://127.0.0.1:8000` for local/desktop development.
 - The full HPC/analysis dependency set (matplotlib, pandas, seaborn, torchvision,
   torchaudio) lives in `hpc_requirements.txt` and is intentionally excluded from
   the lean runtime `requirements.txt`.
+- **Per-session state:** each client sends an `X-Session-Id` header (the Godot
+  frontend generates one per page-load) and the backend keeps that visitor's board
+  in an in-memory store, evicting sessions after 30 min of inactivity (capped at
+  500). Header-less clients share a single `"default"` session. State is not
+  persisted across restarts.
+- **Demo defaults:** a fresh session is `mcts-nn` (Player ONE) vs `minimax-d2`
+  (Player TWO); `MCTS_SIMULATIONS = 100` keeps CPU moves to ~1-2s.
